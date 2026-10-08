@@ -14,7 +14,7 @@ types-setuptools>=84.0.0.20260812
 types-urllib3>=1.26.25.14
 types-xlrd>=2.0.0.20260518
 lxml-stubs>=0.5.1
-mypy==2.3.1
+mypy==2.4.0
 pyright==1.1.411
 ruff>=0.16.3
 pylint==4.0.7
