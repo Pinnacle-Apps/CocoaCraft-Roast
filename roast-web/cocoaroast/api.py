@@ -117,11 +117,15 @@ def analyze_session(session: RoastSession, owner: UUID = Depends(require_account
 
 
 @app.post('/api/v1/sessions/chart.svg')
-def chart(payload: ChartRequest, owner: UUID = Depends(require_account)):
-    points = payload.target_points
+def chart(payload: ChartRequest | RoastSession, owner: UUID = Depends(require_account)):
+    # Original single-session chart calls remain supported.
+    if isinstance(payload, RoastSession):
+        session, points, cutoff = payload, [], None
+    else:
+        session, points, cutoff = payload.session, payload.target_points, payload.replay_until
     if any(b.minute <= a.minute for a, b in zip(points, points[1:])):
         raise HTTPException(422, 'Target times must increase')
-    return Response(render_svg(owned_session(payload.session, owner), points, payload.replay_until), media_type='image/svg+xml',
+    return Response(render_svg(owned_session(session, owner), points, cutoff), media_type='image/svg+xml',
                     headers={'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
 
