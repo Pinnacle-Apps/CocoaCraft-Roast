@@ -56,6 +56,17 @@ async def response_policy(request: Request, call_next):
     return response
 
 
+class TargetPoint(Model):
+    minute: float = Field(ge=0, le=240)
+    bean: float = Field(ge=-20, le=500)
+
+
+class ChartRequest(Model):
+    session: RoastSession
+    target_points: list[TargetPoint] = Field(default_factory=list, max_length=16)
+    replay_until: float | None = Field(default=None, ge=0, le=14400)
+
+
 class ImportRequest(Model):
     profile_text: str = Field(max_length=1000000)
 
@@ -106,8 +117,11 @@ def analyze_session(session: RoastSession, owner: UUID = Depends(require_account
 
 
 @app.post('/api/v1/sessions/chart.svg')
-def chart(session: RoastSession, owner: UUID = Depends(require_account)):
-    return Response(render_svg(owned_session(session, owner)), media_type='image/svg+xml',
+def chart(payload: ChartRequest, owner: UUID = Depends(require_account)):
+    points = payload.target_points
+    if any(b.minute <= a.minute for a, b in zip(points, points[1:])):
+        raise HTTPException(422, 'Target times must increase')
+    return Response(render_svg(owned_session(payload.session, owner), points, payload.replay_until), media_type='image/svg+xml',
                     headers={'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
 
