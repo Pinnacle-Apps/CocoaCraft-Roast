@@ -35,3 +35,7 @@ These are local Windows measurements with one small synthetic fixture and five c
 - Retrieval and verbatim preservation of the unavailable master plan v1.1 prose.
 
 The test output includes a third-party Starlette/AnyIO deprecation warning. It does not fail these checks; an eventual dependency update should consider it separately from the numerical extraction.
+
+## CI collection boundary
+
+The dedicated web job passed on Linux. The initial desktop job also collected the new web API tests with only desktop dependencies installed, producing five missing-FastAPI failures while 2,376 other tests passed. The desktop workflow now excludes `roast-web`, whose complete 12-test suite runs in the dedicated job with its pinned web dependencies. No Artisan test or application source is removed or changed.
