@@ -1,0 +1,38 @@
+{
+  "environment": "Local Windows Python 3.12, not Vercel",
+  "samples": 1800,
+  "import_seconds": 4.566673599649221,
+  "first_request": {
+    "analysis_seconds": 0.03815490007400513,
+    "total_seconds": 1.3295167000032961,
+    "svg_bytes": 19198
+  },
+  "five_concurrent_requests": [
+    {
+      "analysis_seconds": 0.02540890034288168,
+      "total_seconds": 1.5238993000239134,
+      "svg_bytes": 19198
+    },
+    {
+      "analysis_seconds": 0.0397948999889195,
+      "total_seconds": 2.7810897999443114,
+      "svg_bytes": 19198
+    },
+    {
+      "analysis_seconds": 0.03848679969087243,
+      "total_seconds": 4.023015500046313,
+      "svg_bytes": 19198
+    },
+    {
+      "analysis_seconds": 0.04006560007110238,
+      "total_seconds": 6.973650200292468,
+      "svg_bytes": 19198
+    },
+    {
+      "analysis_seconds": 0.020217299927026033,
+      "total_seconds": 5.3095809002406895,
+      "svg_bytes": 19198
+    }
+  ],
+  "limitations": "No hosted cold-start, HTTP/auth latency, memory retention or deployed bundle measurement"
+}
