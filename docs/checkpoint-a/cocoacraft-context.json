@@ -1,0 +1,944 @@
+{
+  "commit": "f96fab124f90a1845287aa075ed7e1c0e0ebb27d",
+  "generated_at": "2026-10-08T13:23:04.404858+00:00",
+  "snapshots": {
+    "docs/supabase-schema-snapshot.json": "1c5deb090386643e77a424a51c7bbddb37cc7a667f8cb07036701f78d04c7184",
+    "docs/supabase-schema-snapshot.sql": "d4ec63380fcfb1450393b0d39a4b7f22444ff540e8917b4dcbe8e33a9f61315d"
+  },
+  "tables": [
+    {
+      "name": "machine_runs",
+      "schema": "public",
+      "columns": [
+        "id",
+        "org_id",
+        "machine_id",
+        "batch_id",
+        "formulation_id",
+        "started_at",
+        "ended_at",
+        "status",
+        "target_profile",
+        "summary",
+        "notes"
+      ],
+      "policies": [
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Insert machine_runs for org members",
+          "with_check": "is_org_member(org_id)"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "is_org_member(org_id)",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Select machine_runs for org members",
+          "with_check": null
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "is_org_member(org_id)",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Update machine_runs for org members",
+          "with_check": "is_org_member(org_id)"
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_180602_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180602_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180602_3_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180602_8_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": "machine_id",
+          "constraint_name": "machine_runs_machine_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machines",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "machine_runs_org_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "orgs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "id",
+          "constraint_name": "machine_runs_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "machine_runs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    },
+    {
+      "name": "machine_telemetry",
+      "schema": "public",
+      "columns": [
+        "id",
+        "org_id",
+        "machine_id",
+        "machine_run_id",
+        "recorded_at",
+        "metric_type",
+        "metric_value",
+        "unit",
+        "raw_payload"
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "qual": "is_org_member(org_id)",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Select machine_telemetry for org members",
+          "with_check": null
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_3_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_5_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_6_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_180626_7_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": "machine_id",
+          "constraint_name": "machine_telemetry_machine_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machines",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "machine_run_id",
+          "constraint_name": "machine_telemetry_machine_run_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machine_runs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "machine_telemetry_org_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "orgs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "id",
+          "constraint_name": "machine_telemetry_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "machine_telemetry",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    },
+    {
+      "name": "org_members",
+      "schema": "public",
+      "columns": [
+        "user_id",
+        "org_id",
+        "role",
+        "created_at"
+      ],
+      "policies": [
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Users can insert their own onboarding membership",
+          "with_check": "(( SELECT auth.uid() AS uid) = user_id)"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Users can see their own org memberships",
+          "with_check": null
+        },
+        {
+          "cmd": "ALL",
+          "qual": "true",
+          "roles": [
+            "postgres"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "allow postgres full access",
+          "with_check": "true"
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "onboarding_insert_org_members_self",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_144766_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_144766_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_144766_3_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_144766_4_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "org_members_role_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "role",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "user_id",
+          "constraint_name": "org_members_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "org_members_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "org_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "org_members_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "user_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "user_id",
+          "constraint_name": "org_members_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "org_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "user_id",
+          "constraint_name": "org_members_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "user_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "org_members_unique",
+          "constraint_type": "UNIQUE",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "user_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "org_members_unique",
+          "constraint_type": "UNIQUE",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "org_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "user_id",
+          "constraint_name": "org_members_unique",
+          "constraint_type": "UNIQUE",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "user_id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "user_id",
+          "constraint_name": "org_members_unique",
+          "constraint_type": "UNIQUE",
+          "foreign_table_name": "org_members",
+          "foreign_column_name": "org_id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    },
+    {
+      "name": "production_run_steps",
+      "schema": "public",
+      "columns": [
+        "id",
+        "org_id",
+        "production_run_id",
+        "step_name",
+        "sequence",
+        "machine_id",
+        "created_at",
+        "updated_at"
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_run_steps.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "tenant members can read",
+          "with_check": null
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_run_steps.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "tenant members can write",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_run_steps.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))"
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_3_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_4_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_5_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_7_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221344_8_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": "machine_id",
+          "constraint_name": "production_run_steps_machine_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machines",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "production_run_steps_org_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "orgs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "production_run_id",
+          "constraint_name": "production_run_steps_production_run_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "production_runs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "id",
+          "constraint_name": "production_run_steps_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "production_run_steps",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    },
+    {
+      "name": "production_runs",
+      "schema": "public",
+      "columns": [
+        "id",
+        "org_id",
+        "formulation_id",
+        "formulation_version_id",
+        "machine_id",
+        "machine_run_id",
+        "run_code",
+        "status",
+        "planned_batch_qty",
+        "planned_batch_uom",
+        "actual_batch_qty",
+        "actual_batch_uom",
+        "started_at",
+        "ended_at",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "notes",
+        "production_plan_id",
+        "final_batch_qty",
+        "final_batch_uom",
+        "final_yield_percent",
+        "final_batch_notes",
+        "consumption_posted_at",
+        "consumption_posted_by"
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_runs.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "tenant members can read",
+          "with_check": null
+        },
+        {
+          "cmd": "ALL",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_runs.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "tenant members can write",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM org_members om\n  WHERE ((om.org_id = production_runs.org_id) AND (om.user_id = ( SELECT auth.uid() AS uid)))))"
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_221222_16_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221222_17_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221222_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221222_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_221222_8_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "production_runs_status_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "production_runs",
+          "foreign_column_name": "status",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "created_by",
+          "constraint_name": "production_runs_created_by_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": "formulation_id",
+          "constraint_name": "production_runs_formulation_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "formulations",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "formulation_version_id",
+          "constraint_name": "production_runs_formulation_version_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "formulation_versions",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "machine_id",
+          "constraint_name": "production_runs_machine_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machines",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "machine_run_id",
+          "constraint_name": "production_runs_machine_run_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "machine_runs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "production_runs_org_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "orgs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "production_plan_id",
+          "constraint_name": "production_runs_production_plan_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "production_plans",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "id",
+          "constraint_name": "production_runs_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "production_runs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    },
+    {
+      "name": "roast_profiles",
+      "schema": "public",
+      "columns": [
+        "id",
+        "org_id",
+        "name",
+        "status",
+        "bean_origin",
+        "origin_lot",
+        "roaster_name",
+        "roaster_model",
+        "batch_size",
+        "batch_uom",
+        "temperature_unit",
+        "target_flavor",
+        "preheat_temperature",
+        "charge_temperature",
+        "target_end_temperature",
+        "total_time_seconds",
+        "curve_points",
+        "outcome_notes",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at",
+        "guidance_inputs",
+        "recommendation_plan",
+        "recommendation_status"
+      ],
+      "policies": [
+        {
+          "cmd": "DELETE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members\n  WHERE ((org_members.org_id = roast_profiles.org_id) AND (org_members.user_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Roast profiles deletable by org members",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "qual": null,
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Roast profiles insertable by org members",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM org_members\n  WHERE ((org_members.org_id = roast_profiles.org_id) AND (org_members.user_id = auth.uid()))))"
+        },
+        {
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members\n  WHERE ((org_members.org_id = roast_profiles.org_id) AND (org_members.user_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Roast profiles readable by org members",
+          "with_check": null
+        },
+        {
+          "cmd": "UPDATE",
+          "qual": "(EXISTS ( SELECT 1\n   FROM org_members\n  WHERE ((org_members.org_id = roast_profiles.org_id) AND (org_members.user_id = auth.uid()))))",
+          "roles": [
+            "public"
+          ],
+          "permissive": "PERMISSIVE",
+          "policyname": "Roast profiles updatable by org members",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM org_members\n  WHERE ((org_members.org_id = roast_profiles.org_id) AND (org_members.user_id = auth.uid()))))"
+        }
+      ],
+      "constraints": [
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_10_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_11_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_17_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_1_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_21_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_22_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_23_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_24_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_25_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_2_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_3_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "2200_335311_4_not_null",
+          "constraint_type": "CHECK",
+          "foreign_table_name": null,
+          "foreign_column_name": null,
+          "foreign_table_schema": null
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_batch_size_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "batch_size",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_batch_uom_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "batch_uom",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_curve_points_array_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "curve_points",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_guidance_inputs_object_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "guidance_inputs",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_recommendation_plan_object_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "recommendation_plan",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_recommendation_status_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "recommendation_status",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_status_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "status",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_temperature_unit_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "temperature_unit",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": null,
+          "constraint_name": "roast_profiles_total_time_check",
+          "constraint_type": "CHECK",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "total_time_seconds",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "org_id",
+          "constraint_name": "roast_profiles_org_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "foreign_table_name": "orgs",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        },
+        {
+          "column_name": "id",
+          "constraint_name": "roast_profiles_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "foreign_table_name": "roast_profiles",
+          "foreign_column_name": "id",
+          "foreign_table_schema": "public"
+        }
+      ]
+    }
+  ]
+}

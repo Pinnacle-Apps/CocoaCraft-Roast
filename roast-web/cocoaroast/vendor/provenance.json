@@ -1,0 +1,16 @@
+[
+  {
+    "method": "compute_ror_simple",
+    "source": "src/artisanlib/canvas.py",
+    "start_line": 4422,
+    "end_line": 4435,
+    "sha256": "9a39efb70d67527268304e7b4c0e6881243de84276672be23fac9a17a2a21878"
+  },
+  {
+    "method": "compute_ror",
+    "source": "src/artisanlib/canvas.py",
+    "start_line": 4437,
+    "end_line": 4466,
+    "sha256": "6f15580c75e8e3bbe6f4e5ae40a802947b05aca854f3be24e137e4a21e27f575"
+  }
+]

@@ -63,4 +63,5 @@ jobs:
           pip install -r src/requirements.txt
       - name: Test with pytest
         run: |
-          pytest
+          # The isolated web suite installs its own dependencies in roast-web.yml.
+          pytest --ignore=roast-web

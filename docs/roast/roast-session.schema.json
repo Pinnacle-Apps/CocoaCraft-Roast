@@ -1,0 +1,432 @@
+{
+  "$defs": {
+    "CacaoMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Origin",
+          "type": "string"
+        },
+        "lot": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Lot",
+          "type": "string"
+        },
+        "bean_form": {
+          "default": "unknown",
+          "enum": [
+            "whole",
+            "nib",
+            "unknown"
+          ],
+          "title": "Bean Form",
+          "type": "string"
+        },
+        "fermentation": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Fermentation",
+          "type": "string"
+        },
+        "moisture_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Moisture Percent"
+        },
+        "beans_per_100g": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Beans Per 100G"
+        },
+        "batch_mass_kg": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Batch Mass Kg"
+        },
+        "output_mass_kg": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Mass Kg"
+        },
+        "roaster": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Roaster",
+          "type": "string"
+        },
+        "probe_location": {
+          "default": "",
+          "maxLength": 300,
+          "title": "Probe Location",
+          "type": "string"
+        },
+        "sensory_notes": {
+          "default": "",
+          "maxLength": 4000,
+          "title": "Sensory Notes",
+          "type": "string"
+        }
+      },
+      "title": "CacaoMetadata",
+      "type": "object"
+    },
+    "EngineSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "delta_samples": {
+          "default": 5,
+          "maximum": 120,
+          "minimum": 1,
+          "title": "Delta Samples",
+          "type": "integer"
+        },
+        "ror_method": {
+          "default": "artisan_simple",
+          "enum": [
+            "artisan_simple",
+            "artisan_polyfit"
+          ],
+          "title": "Ror Method",
+          "type": "string"
+        }
+      },
+      "title": "EngineSettings",
+      "type": "object"
+    },
+    "Event": {
+      "additionalProperties": false,
+      "properties": {
+        "elapsed_seconds": {
+          "title": "Elapsed Seconds",
+          "type": "number"
+        },
+        "kind": {
+          "enum": [
+            "charge",
+            "drop",
+            "cooling_end",
+            "observation",
+            "control_change",
+            "artisan_marker"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "notes": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Notes",
+          "type": "string"
+        },
+        "original_marker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Marker"
+        }
+      },
+      "required": [
+        "elapsed_seconds",
+        "kind",
+        "label"
+      ],
+      "title": "Event",
+      "type": "object"
+    },
+    "ProductionLink": {
+      "additionalProperties": false,
+      "properties": {
+        "production_run_id": {
+          "format": "uuid",
+          "title": "Production Run Id",
+          "type": "string"
+        },
+        "step_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Step Id"
+        },
+        "machine_run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Machine Run Id"
+        },
+        "adapter": {
+          "const": "mock",
+          "default": "mock",
+          "title": "Adapter",
+          "type": "string"
+        }
+      },
+      "required": [
+        "production_run_id"
+      ],
+      "title": "ProductionLink",
+      "type": "object"
+    },
+    "Sample": {
+      "additionalProperties": false,
+      "properties": {
+        "elapsed_seconds": {
+          "title": "Elapsed Seconds",
+          "type": "number"
+        },
+        "bean_temperature": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bean Temperature"
+        },
+        "environment_temperature": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environment Temperature"
+        },
+        "power_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Power Percent"
+        },
+        "airflow_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Airflow Percent"
+        },
+        "drum_speed_rpm": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Drum Speed Rpm"
+        }
+      },
+      "required": [
+        "elapsed_seconds"
+      ],
+      "title": "Sample",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "owner_user_id": {
+      "format": "uuid",
+      "title": "Owner User Id",
+      "type": "string"
+    },
+    "name": {
+      "default": "Untitled cacao roast",
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "temperature_unit": {
+      "default": "C",
+      "enum": [
+        "C",
+        "F"
+      ],
+      "title": "Temperature Unit",
+      "type": "string"
+    },
+    "production_link": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProductionLink"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "metadata": {
+      "$ref": "#/$defs/CacaoMetadata"
+    },
+    "samples": {
+      "items": {
+        "$ref": "#/$defs/Sample"
+      },
+      "maxItems": 10000,
+      "title": "Samples",
+      "type": "array"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/Event"
+      },
+      "maxItems": 500,
+      "title": "Events",
+      "type": "array"
+    },
+    "settings": {
+      "$ref": "#/$defs/EngineSettings"
+    },
+    "source_kind": {
+      "default": "manual",
+      "enum": [
+        "manual",
+        "artisan_import",
+        "mock_replay",
+        "reference_copy"
+      ],
+      "title": "Source Kind",
+      "type": "string"
+    },
+    "source_profile_text": {
+      "anyOf": [
+        {
+          "maxLength": 1000000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Profile Text"
+    },
+    "reference_profile_id": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reference Profile Id"
+    },
+    "notes": {
+      "default": "",
+      "maxLength": 8000,
+      "title": "Notes",
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_user_id"
+  ],
+  "title": "RoastSession",
+  "type": "object"
+}
