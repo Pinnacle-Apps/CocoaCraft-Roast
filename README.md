@@ -131,4 +131,3 @@ License
 # CocoaCraft connection update
 
 The hosted service now accepts `cocoacraft` production-link metadata for stateless calculations. CocoaCraft verifies and stores the actual run/step/machine relationships in its own authenticated APIs and Supabase migration; the Roast service never writes production records. Local `mock` links remain rejected by hosted calculations. Configure the existing CocoaCraft Auth URL and publishable key in the Roast deployment, and `COCOACRAFT_ROAST_SERVICE_URL` in the CocoaCraft app. Core access has no paid-plan check. This transport integration does not change the original Artisan mathematics or implement hardware/AI.
-
