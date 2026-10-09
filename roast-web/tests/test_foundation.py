@@ -180,6 +180,11 @@ class ApiTests(unittest.TestCase):
         session = import_artisan(PROFILE, USER)
         session.production_link = ProductionLink(production_run_id=uuid4())
         self.assertEqual(self.client.post('/api/v1/sessions/analyze', json=session.model_dump(mode='json')).status_code, 501)
+        session.production_link.adapter = 'cocoacraft'
+        linked = self.client.post('/api/v1/sessions/analyze', json=session.model_dump(mode='json'))
+        self.assertEqual(linked.status_code, 200)
+        session.owner_user_id = OTHER
+        self.assertEqual(self.client.post('/api/v1/sessions/analyze', json=session.model_dump(mode='json')).status_code, 403)
 
     def test_concurrent_rendering_and_title_escaping(self):
         from cocoaroast.plotting import render_svg

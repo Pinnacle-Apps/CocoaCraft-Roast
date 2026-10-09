@@ -722,7 +722,10 @@
           },
           "adapter": {
             "type": "string",
-            "const": "mock",
+            "enum": [
+              "mock",
+              "cocoacraft"
+            ],
             "title": "Adapter",
             "default": "mock"
           }

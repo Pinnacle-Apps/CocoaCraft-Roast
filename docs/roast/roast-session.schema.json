@@ -216,8 +216,11 @@
           "title": "Machine Run Id"
         },
         "adapter": {
-          "const": "mock",
           "default": "mock",
+          "enum": [
+            "mock",
+            "cocoacraft"
+          ],
           "title": "Adapter",
           "type": "string"
         }
