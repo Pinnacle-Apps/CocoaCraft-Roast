@@ -47,7 +47,7 @@ class ProductionLink(Model):
     production_run_id: UUID
     step_id: UUID | None = None
     machine_run_id: UUID | None = None
-    adapter: Literal['mock'] = 'mock'
+    adapter: Literal['mock', 'cocoacraft'] = 'mock'
 
 
 class EngineSettings(Model):

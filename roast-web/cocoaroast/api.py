@@ -63,8 +63,10 @@ class ImportRequest(Model):
 def owned_session(session: RoastSession, owner: UUID) -> RoastSession:
     if session.owner_user_id != owner:
         raise HTTPException(403, 'Session belongs to another account')
-    if session.production_link is not None:
+    if session.production_link is not None and session.production_link.adapter == 'mock':
         raise HTTPException(501, 'Production linking is only available in the local mock adapter at this stage')
+    # CocoaCraft verifies/persists the actual relational link with its own RLS.
+    # This stateless service only calculates from the owner-supplied document.
     return session
 
 
