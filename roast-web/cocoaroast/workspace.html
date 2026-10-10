@@ -18,7 +18,7 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 <header><h1>CocoaCraft Roast</h1><p>Standalone manual roast planning &amp; recording • open-source preview</p></header>
 <main>
 <section><h2>Workspace file</h2><p class="hint">Everything stays in this browser until you export it. No account, hardware, or network connection is required. Export before closing or refreshing the page. Do not treat simulated curves as validated roasting guidance.</p>
-<div class="actions"><button id="new" class="secondary">New workspace</button><button id="demo" class="secondary">Load simulated demo</button><button id="export">Export workspace JSON</button>
+<div class="actions"><button id="new" class="secondary">New workspace</button><button id="demo" class="secondary">Load simulated demo</button><button id="export">Export workspace JSON</button><button id="save-os" hidden>Save draft to CocoaCraft OS</button>
 <label style="display:inline-block">Import workspace JSON <input type="file" id="import" accept=".json,application/json"></label></div><p id="status" class="status" role="status" aria-live="polite">Ready. Create a profile or enter manual readings.</p></section>
 <section><h2>Roast profile</h2><div class="fields"><label>Name<input id="name" maxlength="160" value="New cacao roast"></label><label>Bean origin<input id="origin" maxlength="200" placeholder="Origin or blend"></label><label>Lot<input id="lot" maxlength="200"></label><label>Roaster<input id="roaster" maxlength="200"></label><label>Temperature unit<select id="unit"><option>C</option><option>F</option></select></label></div>
 <p class="hint">The target curve is an editable planning reference. Enter your own equipment-specific temperatures and times; CocoaCraft does not prescribe universal roast settings.</p>
@@ -38,6 +38,12 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 const $=id=>document.getElementById(id);
 const blank=()=>({format:'cocoacraft-roast-workspace/v1',name:'New cacao roast',origin:'',lot:'',roaster:'',unit:'C',targets:[],readings:[],events:[],inspections:[],notes:''});
 let data=blank();
+let osParentOrigin=null;
+const allowedOsOrigin='https://www.cocoa-craft.com';
+if(window.parent!==window && document.referrer){try{const parentUrl=new URL(document.referrer);if(parentUrl.origin===allowedOsOrigin)osParentOrigin=parentUrl.origin}catch{}}
+if(osParentOrigin)$('save-os').hidden=false;
+$('save-os').onclick=()=>{try{sync();validate(data);window.parent.postMessage({type:'cocoacraft.roast.save-draft.v1',workspace:data},osParentOrigin);msg('Sending draft profile to CocoaCraft OS…')}catch(e){msg(e.message,true)}};
+window.addEventListener('message',event=>{if(!osParentOrigin||event.origin!==osParentOrigin||event.source!==window.parent)return;if(event.data?.type!=='cocoacraft.roast.save-result.v1')return;msg(event.data.ok?'Draft saved in CocoaCraft OS.':('CocoaCraft OS save failed: '+String(event.data.error||'Unknown error')),!event.data.ok)});
 const msg=(text,bad=false)=>{const el=$('status');el.textContent=text;el.className='status'+(bad?' danger':'')};
 const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=(v,min=0,max=Infinity)=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=min&&n<=max?n:null};
