@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CocoaCraft Roast — manual workspace</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#39251b;background:#f8f4ee}*{box-sizing:border-box}
+body{margin:0}header{padding:18px 24px;background:#3c241a;color:#fff}header h1{margin:0;font-size:25px}header p{margin:6px 0 0;color:#f1d5bf}
+main{max-width:1180px;margin:auto;padding:20px;display:grid;gap:16px}section{background:white;border:1px solid #dfcab8;border-radius:14px;padding:17px}
+h2{margin:0 0 13px;font-size:20px}p{line-height:1.5}label{display:grid;gap:5px;font-size:14px;font-weight:600}
+input,select,textarea,button{font:inherit}input,select,textarea{padding:9px;border:1px solid #c9b6a5;border-radius:7px;min-width:0;width:100%}
+button{border:1px solid #79503a;border-radius:8px;padding:9px 12px;background:#6a3f2b;color:white;cursor:pointer}button.secondary{background:white;color:#653b28}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #dda66c}
+button:disabled{opacity:.5;cursor:not-allowed}.actions,.fields{display:flex;gap:9px;flex-wrap:wrap;align-items:end}.fields>label{flex:1;min-width:145px}
+table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;border-bottom:1px solid #eadfd4;padding:7px 5px;font-size:13px}td input{padding:6px}th{font-size:12px}
+.scroll{overflow-x:auto}.status{padding:10px;border-radius:7px;background:#f3e4d6}.hint{color:#685349;font-size:13px}
+.chart{width:100%;height:auto;background:#fffaf5;border:1px solid #d9c5b4;border-radius:9px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}@media(max-width:780px){.two{grid-template-columns:1fr}}
+.danger{color:#9e3228}footer{padding:20px;text-align:center;color:#6b5348;font-size:13px}
+</style></head><body>
+<header><h1>CocoaCraft Roast</h1><p>Standalone manual roast planning &amp; recording • open-source preview</p></header>
+<main>
+<section><h2>Workspace file</h2><p class="hint">Everything stays in this browser until you export it. No account, hardware, or network connection is required. Export before closing or refreshing the page. Do not treat simulated curves as validated roasting guidance.</p>
+<div class="actions"><button id="new" class="secondary">New workspace</button><button id="export">Export workspace JSON</button>
+<label style="display:inline-block">Import workspace JSON <input type="file" id="import" accept=".json,application/json"></label></div><p id="status" class="status" role="status" aria-live="polite">Ready. Create a profile or enter manual readings.</p></section>
+<section><h2>Roast profile</h2><div class="fields"><label>Name<input id="name" maxlength="160" value="New cacao roast"></label><label>Bean origin<input id="origin" maxlength="200" placeholder="Origin or blend"></label><label>Lot<input id="lot" maxlength="200"></label><label>Roaster<input id="roaster" maxlength="200"></label><label>Temperature unit<select id="unit"><option>C</option><option>F</option></select></label></div>
+<p class="hint">The target curve is an editable planning reference. Enter your own equipment-specific temperatures and times; CocoaCraft does not prescribe universal roast settings.</p>
+<div class="scroll"><table><thead><tr><th>Minute</th><th>Target bean temperature</th><th></th></tr></thead><tbody id="targets"></tbody></table></div>
+<div class="actions"><button id="add-target" class="secondary">Add target point</button><button id="clear-targets" class="secondary">Clear curve</button></div></section>
+<div class="two">
+<section><h2>Manual temperature readings</h2><div class="fields"><label>Elapsed minute<input id="reading-minute" type="number" min="0" max="240" step=".1"></label><label>Bean temperature<input id="reading-bean" type="number" step=".1"></label><label>Environment temperature<input id="reading-env" type="number" step=".1"></label></div>
+<button id="add-reading">Record reading</button><p class="hint">Readings are actual operator entries, not sensor data. Times must increase.</p><div class="scroll"><table><thead><tr><th>Minute</th><th>Bean</th><th>Environment</th><th></th></tr></thead><tbody id="readings"></tbody></table></div></section>
+<section><h2>Milestones and manual checks</h2><div class="fields"><label>Elapsed minute<input id="event-minute" type="number" min="0" step=".1"></label><label>Type<select id="event-kind"><option value="observation">Observation</option><option value="charge">Charge</option><option value="drop">Drop</option><option value="cooling_end">Cooling end</option><option value="control_change">Control change</option></select></label><label>Description<input id="event-label" maxlength="120" placeholder="Aroma, color, action..."></label></div>
+<button id="add-event">Record milestone</button><div class="scroll"><table><thead><tr><th>Minute</th><th>Type</th><th>Description</th><th></th></tr></thead><tbody id="events"></tbody></table></div>
+<h3>Inspection notes</h3><label>Manual sensory or quality observations<textarea id="notes" rows="5" maxlength="8000" placeholder="Appearance, aroma, batch condition, process deviations and follow-up..."></textarea></label></section></div>
+<section><h2>Recorded vs target profile</h2><svg id="chart" viewBox="0 0 800 360" class="chart" role="img" aria-label="Target and recorded bean-temperature curves"></svg><p class="hint">Dashed brown = target • solid blue = manually recorded bean temperature. Missing values are not interpolated. Graph is for comparison only.</p></section>
+</main><footer><a href="/api/source">Source &amp; AGPL license</a> · <a href="/docs">Developer API</a> · No automatic quality acceptance or equipment connection</footer>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const blank=()=>({format:'cocoacraft-roast-workspace/v1',name:'New cacao roast',origin:'',lot:'',roaster:'',unit:'C',targets:[],readings:[],events:[],notes:''});
+let data=blank();
+const msg=(text,bad=false)=>{const el=$('status');el.textContent=text;el.className='status'+(bad?' danger':'')};
+const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const number=(v,min=0,max=Infinity)=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=min&&n<=max?n:null};
+const checkText=(v,max)=>typeof v==='string'&&v.length<=max;
+function validate(value){
+ if(!value||typeof value!=='object'||Array.isArray(value)||value.format!=='cocoacraft-roast-workspace/v1')throw Error('Not a CocoaCraft Roast workspace v1 file.');
+ for(const [key,max] of [['name',160],['origin',200],['lot',200],['roaster',200],['notes',8000]])if(!checkText(value[key],max))throw Error('Invalid '+key+' text.');
+ if(!['C','F'].includes(value.unit))throw Error('Invalid temperature unit.');
+ for(const [key,limit] of [['targets',16],['readings',10000],['events',500]])if(!Array.isArray(value[key])||value[key].length>limit)throw Error('Invalid '+key+' count.');
+ const ordered=(items,key)=>items.every((x,i)=>i===0||x[key]>items[i-1][key]);
+ if(!value.targets.every(x=>number(x.minute,0,240)!==null&&number(x.bean,-20,1000)!==null)||!ordered(value.targets,'minute'))throw Error('Target points must have increasing valid minutes and temperatures.');
+ if(!value.readings.every(x=>number(x.minute,0,240)!==null&&(x.bean===null||number(x.bean,-20,1000)!==null)&&(x.environment===null||number(x.environment,-20,1000)!==null))||!ordered(value.readings,'minute'))throw Error('Readings must have strictly increasing valid times.');
+ if(!value.events.every(x=>number(x.minute,0,240)!==null&&['charge','drop','cooling_end','observation','control_change'].includes(x.kind)&&checkText(x.label,120)&&x.label.trim()))throw Error('Invalid milestone.');
+}
+function downloadFile(){
+ try{sync();validate(data);const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cocoacraft-roast-workspace.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);msg('Exported. Keep this JSON file as your local backup.')}catch(e){msg(e.message,true)}
+}
+function sync(){for(const id of ['name','origin','lot','roaster','unit','notes'])data[id]=$(id).value}
+function updateFields(){for(const id of ['name','origin','lot','roaster','unit','notes'])$(id).value=data[id]}
+function rows(id,items,cells){$(id).innerHTML=items.map((x,i)=>'<tr>'+cells(x,i).map(t=>'<td>'+t+'</td>').join('')+'<td><button class="secondary" data-list="'+id+'" data-index="'+i+'" aria-label="Remove row">Remove</button></td></tr>').join('')}
+function render(){
+ rows('targets',data.targets,(x,i)=>['<input aria-label="Target minute '+(i+1)+'" data-target="'+i+'" data-field="minute" type="number" min="0" max="240" step=".1" value="'+x.minute+'">','<input aria-label="Target temperature '+(i+1)+'" data-target="'+i+'" data-field="bean" type="number" step=".1" value="'+x.bean+'">']);
+ rows('readings',data.readings,x=>[String(x.minute),x.bean===null?'—':String(x.bean),x.environment===null?'—':String(x.environment)]);
+ rows('events',data.events,x=>[String(x.minute),escapeHtml(x.kind),escapeHtml(x.label)]);
+ renderChart();
+}
+function renderChart(){
+ const svg=$('chart');svg.replaceChildren();
+ const series=[data.targets.map(x=>[x.minute,x.bean]),data.readings.filter(x=>x.bean!==null).map(x=>[x.minute,x.bean])];
+ const all=series.flat();const maxX=Math.max(10,...all.map(p=>p[0]));const ys=all.map(p=>p[1]);const minY=ys.length?Math.floor(Math.min(...ys)/10)*10:0;const maxY=ys.length?Math.ceil(Math.max(...ys)/10)*10+10:100;
+ const ns='http://www.w3.org/2000/svg';const add=(tag,attrs,text)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;svg.appendChild(e)};
+ const px=x=>65+x/maxX*700,py=y=>310-(y-minY)/(maxY-minY)*265;
+ for(let i=0;i<=4;i++){const y=45+i*66.25;add('line',{x1:65,y1:y,x2:765,y2:y,stroke:'#e5d8cd'});add('text',{x:8,y:y+4,fill:'#755f50','font-size':12},String(Math.round(maxY-(maxY-minY)*i/4)))}
+ add('line',{x1:65,y1:310,x2:765,y2:310,stroke:'#655043'});add('text',{x:370,y:345,fill:'#6b554b','font-size':13},'Elapsed minutes');
+ series.forEach((points,i)=>{if(!points.length)return;add('polyline',{points:points.map(p=>px(p[0])+','+py(p[1])).join(' '),fill:'none',stroke:i?'#205c93':'#9d5d36','stroke-width':3,'stroke-dasharray':i?'':'8 5'});points.forEach(p=>add('circle',{cx:px(p[0]),cy:py(p[1]),r:3,fill:i?'#205c93':'#9d5d36'}))});
+}
+$('new').onclick=()=>{if(!confirm('Replace the current workspace? Export it first if needed.'))return;data=blank();updateFields();render();msg('New workspace ready.')};
+$('export').onclick=downloadFile;
+$('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2000000)throw Error('Workspace file must be 2 MB or less.');const incoming=JSON.parse(await file.text());validate(incoming);data=incoming;updateFields();render();msg('Workspace imported.')}catch(err){msg('Import failed: '+err.message,true)}finally{e.target.value=''}};
+for(const id of ['name','origin','lot','roaster','unit','notes'])$(id).oninput=sync;
+$('add-target').onclick=()=>{if(data.targets.length>=16)return msg('Maximum 16 target points.',true);const last=data.targets.at(-1);data.targets.push({minute:last?last.minute+1:0,bean:last?last.bean:25});render();msg('Edit the new target point as needed.')};
+$('clear-targets').onclick=()=>{if(confirm('Clear target curve?')){data.targets=[];render()}};
+$('add-reading').onclick=()=>{const minute=number($('reading-minute').value,0,240),bean=number($('reading-bean').value,-20,1000),environment=number($('reading-env').value,-20,1000);if(minute===null||(bean===null&&environment===null))return msg('Enter a valid minute and at least one temperature.',true);if(data.readings.length>=10000||data.readings.some(x=>x.minute>=minute))return msg('Readings must have increasing times (maximum 10000).',true);data.readings.push({minute,bean,environment});$('reading-minute').value='';$('reading-bean').value='';$('reading-env').value='';render();msg('Manual reading recorded.')};
+$('add-event').onclick=()=>{const minute=number($('event-minute').value,0,240),label=$('event-label').value.trim();if(minute===null||!label)return msg('Enter an elapsed minute and milestone description.',true);if(data.events.length>=500)return msg('Maximum 500 milestones.',true);data.events.push({minute,kind:$('event-kind').value,label});data.events.sort((a,b)=>a.minute-b.minute);$('event-label').value='';render();msg('Milestone recorded.')};
+document.addEventListener('click',e=>{const el=e.target.closest('button[data-list]');if(!el)return;const key={targets:'targets',readings:'readings',events:'events'}[el.dataset.list];if(!key)return;data[key].splice(Number(el.dataset.index),1);render();msg('Entry removed from working copy; export to keep changes.')});
+document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-target]'))return;const index=Number(el.dataset.target),field=el.dataset.field;const previous=data.targets[index][field];const parsed=number(el.value,field==='minute'?0:-20,field==='minute'?240:1000);if(parsed===null){el.value=previous;return msg('Invalid target value.',true)}data.targets[index][field]=parsed;data.targets.sort((a,b)=>a.minute-b.minute);if(data.targets.some((x,i)=>i&&x.minute<=data.targets[i-1].minute)){data.targets[index][field]=previous;data.targets.sort((a,b)=>a.minute-b.minute);return msg('Target times must be unique.',true)}render()});
+window.addEventListener('beforeunload',e=>{if(data.targets.length||data.readings.length||data.events.length){e.preventDefault();e.returnValue=''}});
+render();
+})();
+</script></body></html>
