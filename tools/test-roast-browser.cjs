@@ -40,6 +40,7 @@ const assert = require('node:assert/strict');
   await page.locator('#new').click();
   assert.equal(await page.locator('#inspections tr').count(),0);
   await page.locator('#import').setInputFiles({name:'roast.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+  await page.waitForFunction(() => document.getElementById('name').value === 'QA roasted profile' || document.getElementById('status').textContent.startsWith('Import failed'));
   assert.equal(await page.locator('#name').inputValue(),'QA roasted profile');
   assert.equal(await page.locator('#inspections tr').count(),1);
   assert.equal(await page.locator('#readings tr').count(),1);
