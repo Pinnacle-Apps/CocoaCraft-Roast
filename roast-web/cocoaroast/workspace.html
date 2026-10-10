@@ -79,7 +79,15 @@ function renderChart(){
 $('new').onclick=()=>{if(!confirm('Replace the current workspace? Export it first if needed.'))return;data=blank();updateFields();render();msg('New workspace ready.')};
 $('export').onclick=downloadFile;
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2000000)throw Error('Workspace file must be 2 MB or less.');const incoming=JSON.parse(await file.text());validate(incoming);data=incoming;updateFields();render();msg('Workspace imported.')}catch(err){msg('Import failed: '+err.message,true)}finally{e.target.value=''}};
-for(const id of ['name','origin','lot','roaster','unit','notes'])$(id).oninput=sync;
+for(const id of ['name','origin','lot','roaster','notes'])$(id).oninput=sync;
+$('unit').onchange=()=>{
+ const next=$('unit').value, previous=data.unit;
+ if(next===previous)return;
+ const convert=x=>Math.round((next==='F'?x*9/5+32:(x-32)*5/9)*100)/100;
+ data.targets=data.targets.map(p=>({...p,bean:convert(p.bean)}));
+ data.readings=data.readings.map(p=>({...p,bean:p.bean===null?null:convert(p.bean),environment:p.environment===null?null:convert(p.environment)}));
+ data.unit=next;render();msg('All profile targets and recorded temperatures converted from '+previous+' to '+next+'.');
+};
 $('add-target').onclick=()=>{if(data.targets.length>=16)return msg('Maximum 16 target points.',true);const last=data.targets.at(-1);data.targets.push({minute:last?last.minute+1:0,bean:last?last.bean:25});render();msg('Edit the new target point as needed.')};
 $('clear-targets').onclick=()=>{if(confirm('Clear target curve?')){data.targets=[];render()}};
 $('add-reading').onclick=()=>{const minute=number($('reading-minute').value,0,240),bean=number($('reading-bean').value,-20,1000),environment=number($('reading-env').value,-20,1000);if(minute===null||(bean===null&&environment===null))return msg('Enter a valid minute and at least one temperature.',true);if(data.readings.length>=10000||data.readings.some(x=>x.minute>=minute))return msg('Readings must have increasing times (maximum 10000).',true);data.readings.push({minute,bean,environment});$('reading-minute').value='';$('reading-bean').value='';$('reading-env').value='';render();msg('Manual reading recorded.')};
