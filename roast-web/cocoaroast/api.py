@@ -1,5 +1,6 @@
 """Stateless software service. SPDX-License-Identifier: AGPL-3.0-or-later."""
 from uuid import UUID
+from pathlib import Path
 import os
 import re
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -159,11 +160,5 @@ def copy_reference(reference_id: str, owner: UUID = Depends(require_account)):
 
 @app.get('/', response_class=HTMLResponse)
 def index():
-    return '''<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>CocoaCraft Roast</title>
-<style>body{font:17px system-ui;background:#fffaf3;color:#4b281c;margin:0}main{max-width:750px;margin:70px auto;padding:24px}a{color:#713b24}</style>
-</head><body><main><h1>CocoaCraft Roast</h1><p>The cacao roasting workspace is under development.</p>
-<p>Core roasting tools will be free with unlimited use for CocoaCraft accounts. AI assistance is planned for all paid plans after the core release.</p>
-<p>This software foundation supports Artisan profile import, original RoR calculations and Matplotlib charts through authenticated endpoints. The hosted workspace and account entry flow are being integrated.</p>
-<p><a href="https://github.com/Pinnacle-Apps/CocoaCraft-Roast">Source code and license (AGPL)</a> · <a href="/api/health">Service status</a></p>
-<p>Built on Artisan. Original copyright and license notices are preserved.</p></main></body></html>'''
+    """Standalone manual workspace: all state remains client-owned."""
+    return Path(__file__).with_name('workspace.html').read_text(encoding='utf-8')
