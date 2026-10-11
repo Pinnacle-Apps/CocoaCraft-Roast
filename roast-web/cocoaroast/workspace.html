@@ -4,22 +4,23 @@
 <style>
 :root{font-family:system-ui,sans-serif;color:#39251b;background:#f8f4ee}*{box-sizing:border-box}
 body{margin:0}header{padding:18px 24px;background:#3c241a;color:#fff}header h1{margin:0;font-size:25px}header p{margin:6px 0 0;color:#f1d5bf}
-main{max-width:1180px;margin:auto;padding:20px;display:grid;gap:16px}section{background:white;border:1px solid #dfcab8;border-radius:14px;padding:17px}
+main{max-width:1180px;margin:auto;padding:20px;display:grid;gap:16px}section{background:white;border:1px solid #dfcab8;border-radius:14px;padding:17px;min-width:0}
 h2{margin:0 0 13px;font-size:20px}p{line-height:1.5}label{display:grid;gap:5px;font-size:14px;font-weight:600}
 input,select,textarea,button{font:inherit}input,select,textarea{padding:9px;border:1px solid #c9b6a5;border-radius:7px;min-width:0;width:100%}
 button{border:1px solid #79503a;border-radius:8px;padding:9px 12px;background:#6a3f2b;color:white;cursor:pointer}button.secondary{background:white;color:#653b28}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #dda66c}
 button:disabled{opacity:.5;cursor:not-allowed}.actions,.fields{display:flex;gap:9px;flex-wrap:wrap;align-items:end}.fields>label{flex:1;min-width:145px}
 table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;border-bottom:1px solid #eadfd4;padding:7px 5px;font-size:13px}td input{padding:6px}th{font-size:12px}
-.scroll{overflow-x:auto}.status{padding:10px;border-radius:7px;background:#f3e4d6}.hint{color:#685349;font-size:13px}
+.scroll{overflow-x:auto;max-width:100%;min-width:0}.status{padding:10px;border-radius:7px;background:#f3e4d6;overflow-wrap:anywhere}.hint{color:#685349;font-size:13px}
 .chart{width:100%;height:auto;background:#fffaf5;border:1px solid #d9c5b4;border-radius:9px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}@media(max-width:780px){.two{grid-template-columns:1fr}}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px;min-width:0}@media(max-width:780px){.two{grid-template-columns:minmax(0,1fr)}}
 .danger{color:#9e3228}footer{padding:20px;text-align:center;color:#6b5348;font-size:13px}
+@media(max-width:400px){main{padding:10px}section{padding:12px}.fields>label{min-width:0;flex-basis:100%}.actions>*{max-width:100%}button{white-space:normal}}
 </style></head><body>
-<header><h1>CocoaCraft Roast</h1><p>Standalone manual roast planning &amp; recording • open-source preview</p></header>
+<header><h1>CocoaCraft Roast</h1><p>Standalone manual roast planning &amp; recording • open-source MVP</p></header>
 <main>
-<section><h2>Workspace file</h2><p class="hint">Everything stays in this browser until you export it. No account, hardware, or network connection is required. Export before closing or refreshing the page. Do not treat simulated curves as validated roasting guidance.</p>
-<div class="actions"><button id="new" class="secondary">New workspace</button><button id="demo" class="secondary">Load simulated demo</button><button id="export">Export workspace JSON</button><button id="save-os" hidden>Save draft to CocoaCraft OS</button>
-<label style="display:inline-block">Import workspace JSON <input type="file" id="import" accept=".json,application/json"></label></div><p id="status" class="status" role="status" aria-live="polite">Ready. Create a profile or enter manual readings.</p></section>
+<section><h2>Workspace file</h2><p id="persistence-help" class="hint">This working copy stays in the page until you export it. Export workspace JSON to keep targets, readings, milestones, inspections and notes before closing or refreshing. Standalone editing needs no account. Do not treat simulated curves as validated roasting guidance.</p>
+<div class="actions"><button id="new" class="secondary">New workspace</button><button id="demo" class="secondary">Load simulated demo</button><button id="export">Export workspace JSON</button><button id="save-os" hidden>Save Roast Profile to CocoaCraft</button>
+<label style="display:inline-block">Import workspace JSON <input type="file" id="import" accept=".json,application/json"></label></div><p id="save-status" class="status" role="status" aria-live="polite" hidden></p><p id="saved-profiles" hidden><a href="https://www.cocoa-craft.com/workspace/roast-profiles" target="_blank" rel="noopener">View saved Roast profiles</a></p><p id="status" class="status" role="status" aria-live="polite">Ready. Create a profile or enter manual readings.</p></section>
 <section><h2>Roast profile</h2><div class="fields"><label>Name<input id="name" maxlength="160" value="New cacao roast"></label><label>Bean origin<input id="origin" maxlength="200" placeholder="Origin or blend"></label><label>Lot<input id="lot" maxlength="200"></label><label>Roaster<input id="roaster" maxlength="200"></label><label>Temperature unit<select id="unit"><option>C</option><option>F</option></select></label></div>
 <p class="hint">The target curve is an editable planning reference. Enter your own equipment-specific temperatures and times; CocoaCraft does not prescribe universal roast settings.</p>
 <div class="scroll"><table><thead><tr><th>Minute</th><th>Target bean temperature</th><th></th></tr></thead><tbody id="targets"></tbody></table></div>
@@ -41,9 +42,13 @@ let data=blank();
 let osParentOrigin=null;
 const allowedOsOrigin='https://www.cocoa-craft.com';
 if(window.parent!==window && document.referrer){try{const parentUrl=new URL(document.referrer);if(parentUrl.origin===allowedOsOrigin)osParentOrigin=parentUrl.origin}catch{}}
-if(osParentOrigin)$('save-os').hidden=false;
-$('save-os').onclick=()=>{try{sync();validate(data);window.parent.postMessage({type:'cocoacraft.roast.save-draft.v1',workspace:data},osParentOrigin);msg('Sending draft profile to CocoaCraft OS…')}catch(e){msg(e.message,true)}};
-window.addEventListener('message',event=>{if(!osParentOrigin||event.origin!==osParentOrigin||event.source!==window.parent)return;if(event.data?.type!=='cocoacraft.roast.save-result.v1')return;msg(event.data.ok?'Draft saved in CocoaCraft OS.':('CocoaCraft OS save failed: '+String(event.data.error||'Unknown error')),!event.data.ok)});
+let saving=false,savedProfile=null,pendingProfile=null;
+const profileKey=()=>JSON.stringify([data.name,data.origin,data.lot,data.roaster,data.unit,data.targets,data.notes]);
+const refreshSave=()=>{$('save-os').disabled=saving||savedProfile===profileKey()};
+const saveMessage=(text,bad=false)=>{const el=$('save-status');el.hidden=false;el.textContent=text;el.className='status'+(bad?' danger':'')};
+if(osParentOrigin){$('save-os').hidden=false;$('saved-profiles').hidden=false;$('persistence-help').textContent='Save Roast Profile to CocoaCraft creates a draft in your signed-in workspace with the profile details, target curve and notes. Readings, milestones and inspections stay in this working copy: export workspace JSON to keep the full record before closing or refreshing. Simulated curves are not validated roasting guidance.'}
+$('save-os').onclick=()=>{if(!osParentOrigin||saving)return;try{sync();validate(data);if(!data.name.trim())throw Error('Enter a profile name before saving.');if(savedProfile===profileKey())return;pendingProfile=profileKey();saving=true;refreshSave();saveMessage('Saving Roast profile to CocoaCraft…');window.parent.postMessage({type:'cocoacraft.roast.save-draft.v1',workspace:data},osParentOrigin)}catch(e){saving=false;refreshSave();saveMessage(e.message,true)}};
+window.addEventListener('message',event=>{if(!osParentOrigin||event.origin!==osParentOrigin||event.source!==window.parent||!saving)return;if(event.data?.type!=='cocoacraft.roast.save-result.v1'||typeof event.data.ok!=='boolean')return;saving=false;if(event.data.ok)savedProfile=pendingProfile;refreshSave();saveMessage(event.data.ok?'Roast profile saved as a draft in CocoaCraft. View saved Roast profiles below. Edit the profile before saving another draft.':('Save failed: '+String(event.data.error||'Check saved profiles before retrying if the connection was interrupted.')), !event.data.ok)});
 const msg=(text,bad=false)=>{const el=$('status');el.textContent=text;el.className='status'+(bad?' danger':'')};
 const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=(v,min=0,max=Infinity)=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=min&&n<=max?n:null};
@@ -62,7 +67,7 @@ function validate(value){
 function downloadFile(){
  try{sync();validate(data);const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cocoacraft-roast-workspace.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);msg('Exported. Keep this JSON file as your local backup.')}catch(e){msg(e.message,true)}
 }
-function sync(){for(const id of ['name','origin','lot','roaster','unit','notes'])data[id]=$(id).value}
+function sync(){for(const id of ['name','origin','lot','roaster','unit','notes'])data[id]=$(id).value;refreshSave()}
 function updateFields(){for(const id of ['name','origin','lot','roaster','unit','notes'])$(id).value=data[id]}
 function rows(id,items,cells){$(id).innerHTML=items.map((x,i)=>'<tr>'+cells(x,i).map(t=>'<td>'+t+'</td>').join('')+'<td><button class="secondary" data-list="'+id+'" data-index="'+i+'" aria-label="Remove row">Remove</button></td></tr>').join('')}
 function render(){
@@ -70,7 +75,7 @@ function render(){
  rows('readings',data.readings,x=>[String(x.minute),x.bean===null?'—':String(x.bean),x.environment===null?'—':String(x.environment)]);
  rows('events',data.events,x=>[String(x.minute),escapeHtml(x.kind),escapeHtml(x.label)]);
  rows('inspections',data.inspections,x=>[escapeHtml(x.name),escapeHtml(x.result.replace('_',' ')),escapeHtml(x.actual)]);
- renderChart();
+ renderChart();refreshSave();
 }
 function renderChart(){
  const svg=$('chart');svg.replaceChildren();

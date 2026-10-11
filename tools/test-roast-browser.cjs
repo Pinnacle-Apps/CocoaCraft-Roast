@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 (async()=>{
- const browser=await chromium.launch({headless:true});
+ const browser=await chromium.launch({headless:true,...(process.env.ROAST_BROWSER_CHANNEL?{channel:process.env.ROAST_BROWSER_CHANNEL}:{})});
  try{
   const page=await browser.newPage({acceptDownloads:true});
   page.on('pageerror',e=>{throw e});
@@ -54,20 +54,54 @@ const assert = require('node:assert/strict');
   const source=fs.readFileSync(path.join(__dirname,'../roast-web/cocoaroast/workspace.html'),'utf8');
   await embedded.route('https://www.cocoa-craft.com/test-bridge',r=>r.fulfill({
     status:200,contentType:'text/html',
-    body:'<!doctype html><iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe><script>window.received=[];window.addEventListener("message",e=>{if(e.origin==="https://roast-preview.example.test"){window.received.push(e.data);document.getElementById("roast").contentWindow.postMessage({type:"cocoacraft.roast.save-result.v1",ok:true},"https://roast-preview.example.test")}})</script>'
+    body:'<!doctype html><style>body{margin:0}iframe{width:100%;height:1000px;border:0}</style><iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe><script>window.received=[];window.addEventListener("message",e=>{if(e.origin==="https://roast-preview.example.test"){window.received.push(e.data)}})</script>'
   }));
   await embedded.route('https://roast-preview.example.test/',r=>r.fulfill({status:200,contentType:'text/html',body:source}));
   await host.goto('https://www.cocoa-craft.com/test-bridge');
   const roast=host.frameLocator('#roast');
   await roast.locator('#save-os').waitFor({state:'visible'});
   await roast.locator('#name').fill('Embedded QA draft');
+  assert.equal(await roast.locator('#save-os').innerText(),'Save Roast Profile to CocoaCraft');
+  for(const width of [320,375,768,900,1280]){
+   await host.setViewportSize({width,height:1000});
+   const child=host.frames().find(f=>f.url()==='https://roast-preview.example.test/');
+   assert.ok(await child.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth), 'embedded overflow at '+width);
+   assert.ok(await child.evaluate(()=>[...document.querySelectorAll('.scroll')].every(e=>e.scrollWidth>e.clientWidth||e.clientWidth>=650)));
+  }
   await roast.locator('#save-os').click();
+  const child=host.frames().find(f=>f.url()==='https://roast-preview.example.test/');
+  await child.evaluate(()=>document.getElementById('save-os').onclick());
+  assert.equal(await roast.locator('#save-os').isDisabled(),true);
   await host.waitForFunction(()=>window.received?.length===1);
   assert.equal(await host.evaluate(()=>window.received[0].type),'cocoacraft.roast.save-draft.v1');
   assert.equal(await host.evaluate(()=>window.received[0].workspace.name),'Embedded QA draft');
-  await roast.locator('#status').getByText('Draft saved in CocoaCraft OS.').waitFor();
+  assert.equal(await host.evaluate(()=>window.received.length),1);
+  // Wrong source cannot complete a save, even with the right origin.
+  await child.evaluate(()=>window.dispatchEvent(new MessageEvent('message',{origin:'https://www.cocoa-craft.com',source:window,data:{type:'cocoacraft.roast.save-result.v1',ok:true}})));
+  assert.equal(await roast.locator('#save-os').isDisabled(),true);
+  await host.evaluate(()=>document.getElementById('roast').contentWindow.postMessage({type:'cocoacraft.roast.save-result.v1',ok:true},'https://roast-preview.example.test'));
+  await roast.locator('#save-status').getByText('Roast profile saved as a draft', {exact:false}).waitFor();
+  assert.equal(await roast.locator('#save-os').isDisabled(),true);
+  assert.equal(await roast.locator('#saved-profiles a').getAttribute('href'),'https://www.cocoa-craft.com/workspace/roast-profiles');
+  await roast.locator('#name').fill('Changed draft');
+  assert.equal(await roast.locator('#save-os').isDisabled(),false);
+  await roast.locator('#save-os').click();
+  await host.waitForFunction(()=>window.received.length===2);
+  await host.evaluate(()=>document.getElementById('roast').contentWindow.postMessage({type:'cocoacraft.roast.save-result.v1',ok:false,error:'Sign in to CocoaCraft, then save again.'},'https://roast-preview.example.test'));
+  await roast.locator('#save-status').getByText('Save failed:', {exact:false}).waitFor();
+  assert.equal(await roast.locator('#save-os').isDisabled(),false);
+  assert.match(await roast.locator('#save-status').innerText(),/Sign in/);
+  await roast.locator('#save-os').click();
+  await host.waitForFunction(()=>window.received.length===3);
+  await host.evaluate(()=>document.getElementById('roast').contentWindow.postMessage({type:'cocoacraft.roast.save-result.v1',ok:false,error:'Save canceled.'},'https://roast-preview.example.test'));
+  await roast.locator('#save-status').getByText('Save canceled.', {exact:false}).waitFor();
+  assert.equal(await roast.locator('#save-os').isDisabled(),false);
+  // An unrelated embedding origin gets no save capability.
+  await embedded.route('https://untrusted.example.test/',r=>r.fulfill({contentType:'text/html',body:'<iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe>'}));
+  await host.goto('https://untrusted.example.test/');
+  assert.equal(await host.frameLocator('#roast').locator('#save-os').isHidden(),true);
   await embedded.close();
-  console.log('PASS: authorized embedded save bridge and response');
+  console.log('PASS: mocked embedded bridge, duplicate guards, error/cancel states, strict origin/source checks, responsive layout (no live authenticated persistence)');
   console.log('PASS: browser workflow, unit conversion, manual checks, JSON roundtrip, invalid import safety');
  }finally{await browser.close()}
 })().catch(err=>{console.error(err);process.exitCode=1});
