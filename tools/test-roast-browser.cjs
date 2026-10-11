@@ -48,6 +48,26 @@ const assert = require('node:assert/strict');
   await page.locator('#import').setInputFiles({name:'malformed.json',mimeType:'application/json',buffer:Buffer.from('{"format":"wrong"}')});
   assert.equal(await page.locator('#name').inputValue(),'QA roasted profile');
   assert.match(await page.locator('#status').innerText(),/Import failed/);
+  // Cross-origin parent bridge, with network mocked. No customer account or live API.
+  const embedded=await browser.newContext();
+  const host=await embedded.newPage();
+  const source=fs.readFileSync(path.join(__dirname,'../roast-web/cocoaroast/workspace.html'),'utf8');
+  await embedded.route('https://www.cocoa-craft.com/test-bridge',r=>r.fulfill({
+    status:200,contentType:'text/html',
+    body:'<!doctype html><iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe><script>window.received=[];window.addEventListener("message",e=>{if(e.origin==="https://roast-preview.example.test"){window.received.push(e.data);document.getElementById("roast").contentWindow.postMessage({type:"cocoacraft.roast.save-result.v1",ok:true},"https://roast-preview.example.test")}})</script>'
+  }));
+  await embedded.route('https://roast-preview.example.test/',r=>r.fulfill({status:200,contentType:'text/html',body:source}));
+  await host.goto('https://www.cocoa-craft.com/test-bridge');
+  const roast=host.frameLocator('#roast');
+  await roast.locator('#save-os').waitFor({state:'visible'});
+  await roast.locator('#name').fill('Embedded QA draft');
+  await roast.locator('#save-os').click();
+  await host.waitForFunction(()=>window.received?.length===1);
+  assert.equal(await host.evaluate(()=>window.received[0].type),'cocoacraft.roast.save-draft.v1');
+  assert.equal(await host.evaluate(()=>window.received[0].workspace.name),'Embedded QA draft');
+  await roast.locator('#status').getByText('Draft saved in CocoaCraft OS.').waitFor();
+  await embedded.close();
+  console.log('PASS: authorized embedded save bridge and response');
   console.log('PASS: browser workflow, unit conversion, manual checks, JSON roundtrip, invalid import safety');
  }finally{await browser.close()}
 })().catch(err=>{console.error(err);process.exitCode=1});
