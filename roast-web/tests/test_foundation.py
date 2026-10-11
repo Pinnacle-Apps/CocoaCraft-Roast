@@ -137,6 +137,17 @@ class ApiTests(unittest.TestCase):
         from cocoaroast.auth import require_account
         self.app.dependency_overrides[require_account] = lambda: USER
 
+    def test_standalone_workspace_is_available_without_account(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('CocoaCraft Roast', response.text)
+        self.assertIn('cocoacraft-roast-workspace/v1', response.text)
+        self.assertIn('Export workspace JSON', response.text)
+        self.assertIn('Manual temperature readings', response.text)
+        self.assertIn('Milestones and manual checks', response.text)
+        self.assertIn('No automatic quality acceptance', response.text)
+        self.assertEqual(response.headers['cache-control'], 'no-store')
+
     def test_fail_closed_for_every_private_route(self):
         self.assertEqual(self.client.get('/api/health').status_code, 200)
         for path in ('import', 'validate', 'analyze', 'chart.svg', 'export', 'original.alog'):

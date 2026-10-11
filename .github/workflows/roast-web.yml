@@ -18,3 +18,10 @@ jobs:
           cache-dependency-path: roast-web/requirements.txt
       - run: pip install -r roast-web/requirements-dev.txt
       - run: python -m unittest discover -s roast-web/tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/test-roast-workspace.cjs
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/test-roast-browser.cjs
