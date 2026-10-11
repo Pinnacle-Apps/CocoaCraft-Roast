@@ -54,12 +54,24 @@ const assert = require('node:assert/strict');
   const source=fs.readFileSync(path.join(__dirname,'../roast-web/cocoaroast/workspace.html'),'utf8');
   await embedded.route('https://www.cocoa-craft.com/test-bridge',r=>r.fulfill({
     status:200,contentType:'text/html',
-    body:'<!doctype html><style>body{margin:0}iframe{width:100%;height:1000px;border:0}</style><iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe><script>window.received=[];window.addEventListener("message",e=>{if(e.origin==="https://roast-preview.example.test"){window.received.push(e.data)}})</script>'
+    body:'<!doctype html><style>body{margin:0}iframe{width:100%;height:1000px;border:0}</style><iframe id="roast" sandbox="allow-scripts allow-same-origin allow-downloads allow-modals allow-popups allow-popups-to-escape-sandbox" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe><script>window.received=[];window.addEventListener("message",e=>{if(e.origin==="https://roast-preview.example.test"){if(e.data.type==="cocoacraft.roast.equipment-request.v1"){document.getElementById("roast").contentWindow.postMessage({type:"cocoacraft.roast.equipment-result.v1",machines:window.equipment||[{id:"33333333-3333-4333-8333-333333333333",name:"Shop drum",machine_type:"roaster"},{id:"44444444-4444-4444-8444-444444444444",name:"Roast grinder",machine_type:"melanger"}]},"https://roast-preview.example.test")}else{window.received.push(e.data)}}})</script>'
   }));
   await embedded.route('https://roast-preview.example.test/',r=>r.fulfill({status:200,contentType:'text/html',body:source}));
   await host.goto('https://www.cocoa-craft.com/test-bridge');
   const roast=host.frameLocator('#roast');
   await roast.locator('#save-os').waitFor({state:'visible'});
+  await roast.locator('#roaster option[value="33333333-3333-4333-8333-333333333333"]').waitFor({state:'attached'});
+  assert.equal(await roast.locator('#lot').count(),0);
+  assert.equal(await roast.locator('#roaster').evaluate(e=>e.tagName),'SELECT');
+  assert.equal(await roast.locator('#save-os').isDisabled(),true);
+  assert.equal(await roast.locator('#roaster option').count(),3,'only roasters plus placeholder/add option');
+  await roast.locator('#roaster').selectOption('33333333-3333-4333-8333-333333333333');
+  await embedded.route('https://www.cocoa-craft.com/factorylink/add',r=>r.fulfill({contentType:'text/html',body:'<h1>Add equipment</h1>'}));
+  const newTabPromise=host.waitForEvent('popup');
+  await roast.locator('#roaster').selectOption('__add__');
+  const newTab=await newTabPromise;await newTab.waitForLoadState();
+  assert.equal(newTab.url(),'https://www.cocoa-craft.com/factorylink/add');await newTab.close();
+  assert.equal(await roast.locator('#roaster').inputValue(),'33333333-3333-4333-8333-333333333333');
   await roast.locator('#name').fill('Embedded QA draft');
   assert.equal(await roast.locator('#save-os').innerText(),'Save Roast Profile to CocoaCraft');
   for(const width of [320,375,768,900,1280]){
@@ -75,6 +87,7 @@ const assert = require('node:assert/strict');
   await host.waitForFunction(()=>window.received?.length===1);
   assert.equal(await host.evaluate(()=>window.received[0].type),'cocoacraft.roast.save-draft.v1');
   assert.equal(await host.evaluate(()=>window.received[0].workspace.name),'Embedded QA draft');
+  assert.equal(await host.evaluate(()=>window.received[0].workspace.roaster_id),'33333333-3333-4333-8333-333333333333');
   assert.equal(await host.evaluate(()=>window.received.length),1);
   // Wrong source cannot complete a save, even with the right origin.
   await child.evaluate(()=>window.dispatchEvent(new MessageEvent('message',{origin:'https://www.cocoa-craft.com',source:window,data:{type:'cocoacraft.roast.save-result.v1',ok:true}})));
@@ -96,8 +109,18 @@ const assert = require('node:assert/strict');
   await host.evaluate(()=>document.getElementById('roast').contentWindow.postMessage({type:'cocoacraft.roast.save-result.v1',ok:false,error:'Save canceled.'},'https://roast-preview.example.test'));
   await roast.locator('#save-status').getByText('Save canceled.', {exact:false}).waitFor();
   assert.equal(await roast.locator('#save-os').isDisabled(),false);
+  await host.evaluate(()=>window.equipment=[]);
+  await roast.locator('#refresh-equipment').click();
+  await roast.locator('#equipment-help').getByText('No roasting equipment', {exact:false}).waitFor();
+  assert.equal(await roast.locator('#save-os').isDisabled(),true);
+  assert.equal(await roast.locator('#roaster option[value="__add__"]').count(),1);
+  await host.evaluate(()=>window.equipment=[{id:'55555555-5555-4555-8555-555555555555',name:'New registered roaster',machine_type:'roaster'}]);
+  await roast.locator('#refresh-equipment').click();
+  await roast.locator('#roaster option[value="55555555-5555-4555-8555-555555555555"]').waitFor({state:'attached'});
+  await roast.locator('#roaster').selectOption('55555555-5555-4555-8555-555555555555');
+  assert.equal(await roast.locator('#save-os').isDisabled(),false);
   // An unrelated embedding origin gets no save capability.
-  await embedded.route('https://untrusted.example.test/',r=>r.fulfill({contentType:'text/html',body:'<iframe id="roast" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe>'}));
+  await embedded.route('https://untrusted.example.test/',r=>r.fulfill({contentType:'text/html',body:'<iframe id="roast" sandbox="allow-scripts allow-same-origin allow-downloads allow-modals allow-popups allow-popups-to-escape-sandbox" referrerpolicy="origin" src="https://roast-preview.example.test/"></iframe>'}));
   await host.goto('https://untrusted.example.test/');
   assert.equal(await host.frameLocator('#roast').locator('#save-os').isHidden(),true);
   await embedded.close();

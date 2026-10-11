@@ -21,7 +21,8 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 <section><h2>Workspace file</h2><p id="persistence-help" class="hint">This working copy stays in the page until you export it. Export workspace JSON to keep targets, readings, milestones, inspections and notes before closing or refreshing. Standalone editing needs no account. Do not treat simulated curves as validated roasting guidance.</p>
 <div class="actions"><button id="new" class="secondary">New workspace</button><button id="demo" class="secondary">Load simulated demo</button><button id="export">Export workspace JSON</button><button id="save-os" hidden>Save Roast Profile to CocoaCraft</button>
 <label style="display:inline-block">Import workspace JSON <input type="file" id="import" accept=".json,application/json"></label></div><p id="save-status" class="status" role="status" aria-live="polite" hidden></p><p id="saved-profiles" hidden><a href="https://www.cocoa-craft.com/workspace/roast-profiles" target="_blank" rel="noopener">View saved Roast profiles</a></p><p id="status" class="status" role="status" aria-live="polite">Ready. Create a profile or enter manual readings.</p></section>
-<section><h2>Roast profile</h2><div class="fields"><label>Name<input id="name" maxlength="160" value="New cacao roast"></label><label>Bean origin<input id="origin" maxlength="200" placeholder="Origin or blend"></label><label>Lot<input id="lot" maxlength="200"></label><label>Roaster<input id="roaster" maxlength="200"></label><label>Temperature unit<select id="unit"><option>C</option><option>F</option></select></label></div>
+<section><h2>Roast profile</h2><div class="fields"><label>Name<input id="name" maxlength="160" value="New cacao roast"></label><label>Bean origin<input id="origin" maxlength="200" placeholder="Origin or blend"></label><label>Roaster Type<select id="roaster" required disabled><option value="">Open in CocoaCraft to select equipment</option></select></label><label>Temperature unit<select id="unit"><option>C</option><option>F</option></select></label></div>
+<p id="equipment-help" class="hint">Choose registered roasting equipment in CocoaCraft before saving a profile. Lots are assigned when a roast is executed.</p><div id="equipment-actions" class="actions" hidden><a id="add-equipment" href="https://www.cocoa-craft.com/factorylink/add" target="_blank" rel="noopener">Add new equipment</a><button id="refresh-equipment" class="secondary">Refresh equipment</button></div>
 <p class="hint">The target curve is an editable planning reference. Enter your own equipment-specific temperatures and times; CocoaCraft does not prescribe universal roast settings.</p>
 <div class="scroll"><table><thead><tr><th>Minute</th><th>Target bean temperature</th><th></th></tr></thead><tbody id="targets"></tbody></table></div>
 <div class="actions"><button id="add-target" class="secondary">Add target point</button><button id="clear-targets" class="secondary">Clear curve</button></div></section>
@@ -37,18 +38,33 @@ table{border-collapse:collapse;width:100%;min-width:650px}th,td{text-align:left;
 (() => {
 'use strict';
 const $=id=>document.getElementById(id);
-const blank=()=>({format:'cocoacraft-roast-workspace/v1',name:'New cacao roast',origin:'',lot:'',roaster:'',unit:'C',targets:[],readings:[],events:[],inspections:[],notes:''});
+const blank=()=>({format:'cocoacraft-roast-workspace/v1',name:'New cacao roast',origin:'',lot:'',roaster:'',roaster_id:'',unit:'C',targets:[],readings:[],events:[],inspections:[],notes:''});
 let data=blank();
+let machines=[],equipmentLoading=false;
 let osParentOrigin=null;
 const allowedOsOrigin='https://www.cocoa-craft.com';
 if(window.parent!==window && document.referrer){try{const parentUrl=new URL(document.referrer);if(parentUrl.origin===allowedOsOrigin)osParentOrigin=parentUrl.origin}catch{}}
 let saving=false,savedProfile=null,pendingProfile=null;
-const profileKey=()=>JSON.stringify([data.name,data.origin,data.lot,data.roaster,data.unit,data.targets,data.notes]);
-const refreshSave=()=>{$('save-os').disabled=saving||savedProfile===profileKey()};
+const profileKey=()=>JSON.stringify([data.name,data.origin,data.roaster_id,data.unit,data.targets,data.notes]);
+const refreshSave=()=>{$('save-os').disabled=saving||equipmentLoading||!machines.some(m=>m.id===data.roaster_id)||savedProfile===profileKey()};
 const saveMessage=(text,bad=false)=>{const el=$('save-status');el.hidden=false;el.textContent=text;el.className='status'+(bad?' danger':'')};
-if(osParentOrigin){$('save-os').hidden=false;$('saved-profiles').hidden=false;$('persistence-help').textContent='Save Roast Profile to CocoaCraft creates a draft in your signed-in workspace with the profile details, target curve and notes. Readings, milestones and inspections stay in this working copy: export workspace JSON to keep the full record before closing or refreshing. Simulated curves are not validated roasting guidance.'}
-$('save-os').onclick=()=>{if(!osParentOrigin||saving)return;try{sync();validate(data);if(!data.name.trim())throw Error('Enter a profile name before saving.');if(savedProfile===profileKey())return;pendingProfile=profileKey();saving=true;refreshSave();saveMessage('Saving Roast profile to CocoaCraft…');window.parent.postMessage({type:'cocoacraft.roast.save-draft.v1',workspace:data},osParentOrigin)}catch(e){saving=false;refreshSave();saveMessage(e.message,true)}};
+if(osParentOrigin){$('equipment-actions').hidden=false;$('save-os').hidden=false;$('saved-profiles').hidden=false;$('persistence-help').textContent='Save Roast Profile to CocoaCraft creates a draft in your signed-in workspace with the profile details, target curve and notes. Readings, milestones and inspections stay in this working copy: export workspace JSON to keep the full record before closing or refreshing. Simulated curves are not validated roasting guidance.'}
+$('save-os').onclick=()=>{if(!osParentOrigin||saving)return;try{sync();validate(data);if(!machines.some(m=>m.id===data.roaster_id))throw Error('Select registered roasting equipment before saving.');if(!data.name.trim())throw Error('Enter a profile name before saving.');if(savedProfile===profileKey())return;pendingProfile=profileKey();saving=true;refreshSave();saveMessage('Saving Roast profile to CocoaCraft…');window.parent.postMessage({type:'cocoacraft.roast.save-draft.v1',workspace:data},osParentOrigin)}catch(e){saving=false;refreshSave();saveMessage(e.message,true)}};
 window.addEventListener('message',event=>{if(!osParentOrigin||event.origin!==osParentOrigin||event.source!==window.parent||!saving)return;if(event.data?.type!=='cocoacraft.roast.save-result.v1'||typeof event.data.ok!=='boolean')return;saving=false;if(event.data.ok)savedProfile=pendingProfile;refreshSave();saveMessage(event.data.ok?'Roast profile saved as a draft in CocoaCraft. View saved Roast profiles below. Edit the profile before saving another draft.':('Save failed: '+String(event.data.error||'Check saved profiles before retrying if the connection was interrupted.')), !event.data.ok)});
+function equipmentOptions(){
+ const select=$('roaster');select.replaceChildren(new Option(equipmentLoading?'Loading equipment…':'Select roasting equipment',''));
+ for(const m of machines)select.add(new Option(m.name+' ('+m.machine_type+')',m.id));
+ if(osParentOrigin)select.add(new Option('Add new equipment…','__add__'));
+ select.disabled=!osParentOrigin||equipmentLoading;select.value=machines.some(m=>m.id===data.roaster_id)?data.roaster_id:'';refreshSave();
+}
+function requestEquipment(){if(!osParentOrigin)return;equipmentLoading=true;equipmentOptions();$('equipment-help').textContent='Loading your registered roasting equipment…';window.parent.postMessage({type:'cocoacraft.roast.equipment-request.v1'},osParentOrigin)}
+window.addEventListener('message',event=>{
+ if(!osParentOrigin||event.origin!==osParentOrigin||event.source!==window.parent||event.data?.type!=='cocoacraft.roast.equipment-result.v1')return;
+ equipmentLoading=false;machines=Array.isArray(event.data.machines)?event.data.machines.filter(m=>m&&typeof m.id==='string'&&typeof m.name==='string'&&typeof m.machine_type==='string'&&/roast/i.test(m.machine_type)):[];
+ equipmentOptions();$('equipment-help').textContent=event.data.error?String(event.data.error):machines.length?'Choose equipment from your registry. Add new equipment opens the Equipment module in a new tab; return here and refresh the list. Lots belong to roast execution.':'No roasting equipment is registered. Choose Add new equipment, register a roaster, then return here and refresh the list.';
+});
+$('roaster').onchange=()=>{if($('roaster').value==='__add__'){$('roaster').value=data.roaster_id||'';$('add-equipment').click();return}const machine=machines.find(m=>m.id===$('roaster').value);data.roaster_id=machine?.id||'';data.roaster=machine?.name||'';refreshSave()};
+$('refresh-equipment').onclick=requestEquipment;
 const msg=(text,bad=false)=>{const el=$('status');el.textContent=text;el.className='status'+(bad?' danger':'')};
 const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=(v,min=0,max=Infinity)=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=min&&n<=max?n:null};
@@ -67,8 +83,8 @@ function validate(value){
 function downloadFile(){
  try{sync();validate(data);const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cocoacraft-roast-workspace.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);msg('Exported. Keep this JSON file as your local backup.')}catch(e){msg(e.message,true)}
 }
-function sync(){for(const id of ['name','origin','lot','roaster','unit','notes'])data[id]=$(id).value;refreshSave()}
-function updateFields(){for(const id of ['name','origin','lot','roaster','unit','notes'])$(id).value=data[id]}
+function sync(){for(const id of ['name','origin','unit','notes'])data[id]=$(id).value;refreshSave()}
+function updateFields(){for(const id of ['name','origin','unit','notes'])$(id).value=data[id];equipmentOptions()}
 function rows(id,items,cells){$(id).innerHTML=items.map((x,i)=>'<tr>'+cells(x,i).map(t=>'<td>'+t+'</td>').join('')+'<td><button class="secondary" data-list="'+id+'" data-index="'+i+'" aria-label="Remove row">Remove</button></td></tr>').join('')}
 function render(){
  rows('targets',data.targets,(x,i)=>['<input aria-label="Target minute '+(i+1)+'" data-target="'+i+'" data-field="minute" type="number" min="0" max="240" step=".1" value="'+x.minute+'">','<input aria-label="Target temperature '+(i+1)+'" data-target="'+i+'" data-field="bean" type="number" step=".1" value="'+x.bean+'">']);
@@ -90,7 +106,7 @@ function renderChart(){
 $('new').onclick=()=>{if(!confirm('Replace the current workspace? Export it first if needed.'))return;data=blank();updateFields();render();msg('New workspace ready.')};
 $('export').onclick=downloadFile;
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>2000000)throw Error('Workspace file must be 2 MB or less.');const incoming=JSON.parse(await file.text());validate(incoming);data=incoming;updateFields();render();msg('Workspace imported.')}catch(err){msg('Import failed: '+err.message,true)}finally{e.target.value=''}};
-for(const id of ['name','origin','lot','roaster','notes'])$(id).oninput=sync;
+for(const id of ['name','origin','notes'])$(id).oninput=sync;
 $('unit').onchange=()=>{
  const next=$('unit').value, previous=data.unit;
  if(next===previous)return;
@@ -108,6 +124,6 @@ $('demo').onclick=()=>{if(!confirm('Replace the current workspace with clearly s
 document.addEventListener('click',e=>{const el=e.target.closest('button[data-list]');if(!el)return;const key={targets:'targets',readings:'readings',events:'events',inspections:'inspections'}[el.dataset.list];if(!key)return;data[key].splice(Number(el.dataset.index),1);render();msg('Entry removed from working copy; export to keep changes.')});
 document.addEventListener('change',e=>{const el=e.target;if(!el.matches('[data-target]'))return;const index=Number(el.dataset.target),field=el.dataset.field;const previous=data.targets[index][field];const parsed=number(el.value,field==='minute'?0:-20,field==='minute'?240:1000);if(parsed===null){el.value=previous;return msg('Invalid target value.',true)}const next=data.targets.map(x=>({...x}));next[index][field]=parsed;next.sort((a,b)=>a.minute-b.minute);if(next.some((x,i)=>i&&x.minute<=next[i-1].minute)){el.value=previous;return msg('Target times must be unique.',true)}data.targets=next;render();msg('Target curve updated.')});
 window.addEventListener('beforeunload',e=>{if(data.targets.length||data.readings.length||data.events.length||data.inspections.length){e.preventDefault();e.returnValue=''}});
-render();
+render();requestEquipment();
 })();
 </script></body></html>
